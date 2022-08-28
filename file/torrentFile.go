@@ -1,16 +1,20 @@
 package file
 
 import (
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/rohitpjpti18/tclient/p2p"
 	"github.com/rohitpjpti18/tclient/peers"
 
 	"github.com/jackpal/bencode-go"
 )
+
+const Port uint16 = 6881
 
 type TorrentFile struct {
 	Announce    string
@@ -72,6 +76,47 @@ func (t *TorrentFile) requestPeers(peerID [20]byte, port uint16) ([]peers.Peer, 
 	}
 
 	return peers.Unmarshal([]byte(trackerResp.Peers))
+}
+
+func (t *TorrentFile) DownloadToFile(path string) error {
+	var peerID [20]byte
+	_, err := rand.Read(peerID[:])
+	if err != nil {
+		return err
+	}
+
+	peers, err := t.requestPeers(peerID, Port)
+	if err != nil {
+		return err
+	}
+
+	torrent := p2p.Torrent{
+		Peers:       peers,
+		PeerID:      peerID,
+		InfoHash:    t.InfoHash,
+		PieceHashes: t.PieceHashes,
+		PieceLength: t.PieceLength,
+		Length:      t.Length,
+		Name:        t.Name,
+	}
+
+	buf, err := torrent.Download()
+	if err != nil {
+		return err
+	}
+
+	outFile, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+
+	defer outFile.Close()
+	_, err = outFile.Write(buf)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 ///
