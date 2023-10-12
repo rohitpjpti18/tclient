@@ -15,4 +15,3 @@ torrent-client debian-xxxxxxx-amd64-netinst.iso.torrent debian.iso
 ![screenshot](./docs/tclient-ss.gif)
 
 
-Based on tutorial form https://blog.jse.li/posts/torrent/
